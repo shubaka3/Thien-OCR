@@ -1,6 +1,6 @@
 FROM python:3.8-slim
 
-# Cài đặt dependencies hệ thống cần thiết
+# Cài đặt các dependencies hệ thống
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libglib2.0-0 \
@@ -8,13 +8,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxext6 \
     libxrender-dev \
     libgl1 \
+    tesseract-ocr \
+    tesseract-ocr-vie \
+    tesseract-ocr-eng \
+    lsb-release \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy code vào container
+# Tạo thư mục app
 WORKDIR /app
+
+# Copy requirements trước
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy source code vào container
 COPY main.py /app/
 
 EXPOSE 8000

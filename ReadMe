@@ -15,5 +15,20 @@ nhưng phải chạy 1 lần để build container)
 3) có thể sửa theo lệnh dưới để hỗ trợ đa luồng
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
 
+V2 update
+- chạy docker:
+    docker run -d --name ocr-container -p 8000:8000 ocr-app
+- Chạy để test chưa build lại image 
+    Xóa container cũ: docker rm -f ocr-container
+    Chạy docker tạm thời chưa thật sự build vào image: docker run -d --name ocr-container -p 8000:8000 -v "E:/Working Company/OCR-PaddlePaddle/app/main.py:/app/main.py" ocr-app
 
 
+✅ Cách gọi API:
+Method: POST
+URL: http://<your-server>/ocr-full
+Body (form-data):
+
+Key	Value	Ghi chú
+file	ảnh cần OCR	định dạng JPEG/PNG
+model	"paddle" hoặc "tesseract"	chọn engine OCR
+lang	"eng" hoặc "vie"	ngôn ngữ văn bản

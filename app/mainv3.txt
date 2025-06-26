@@ -1,0 +1,114 @@
+from fastapi import FastAPI, UploadFile, File, HTTPException,Form
+from fastapi.responses import JSONResponse
+from paddleocr import PaddleOCR
+from PIL import Image
+import pytesseract
+import io
+import numpy as np
+
+app = FastAPI()
+
+# Dùng để detect box
+ocr = PaddleOCR(use_angle_cls=True, lang='en')
+
+@app.post("/ocr-basic")
+async def ocr_basic(file: UploadFile = File(...)):
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert('RGB')
+        image_np = np.array(image)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    result = ocr.ocr(image_np, cls=True)
+
+    output = []
+    for line in result:
+        output.append({
+            "box": line[0],
+            "text": line[1][0],
+            "confidence": line[1][1]
+        })
+
+    return JSONResponse(content={"result": output})
+
+@app.post("/ocr-full")
+async def ocr_full(file: UploadFile = File(...)):
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert('RGB')
+        image_np = np.array(image)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    result = ocr.ocr(image_np, cls=True)
+
+    return JSONResponse(content={"result": result})
+
+@app.post("/ocr-fullv2")
+async def ocr_fullv2(file: UploadFile = File(...)):
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert('RGB')
+        image_np = np.array(image)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    raw_result = ocr.ocr(image_np, cls=True)
+
+    formatted_result = []
+    for line in raw_result:
+        formatted_result.append({
+            "box": line[0],
+            "text": line[1][0],
+        })
+
+    return JSONResponse(content={"result": formatted_result})
+
+
+@app.post("/ocr-vie-full")
+async def ocr_vie_full(file: UploadFile = File(...)):
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
+        image_np = np.array(image)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    result = ocr.ocr(image_np, cls=True)
+
+    output = []
+
+    if len(result) > 0:
+        for line in result[0]:  # result[0] là danh sách các box trong ảnh
+            box, (_, _) = line
+
+            # Đảm bảo box có đúng định dạng
+            if not isinstance(box, list) or not all(isinstance(pt, list) and len(pt) == 2 for pt in box):
+                continue  # skip nếu box sai cấu trúc
+
+            # Tính tọa độ box
+            try:
+                x_coords = [int(pt[0]) for pt in box]
+                y_coords = [int(pt[1]) for pt in box]
+            except Exception:
+                continue  # skip nếu có lỗi ép kiểu
+
+            x_min, x_max = max(0, min(x_coords)), max(x_coords)
+            y_min, y_max = max(0, min(y_coords)), max(y_coords)
+
+            # Crop vùng chữ từ ảnh gốc
+            cropped = image_np[y_min:y_max, x_min:x_max]
+
+            # OCR bằng Tesseract tiếng Việt
+            try:
+                text = pytesseract.image_to_string(cropped, lang='vie')
+            except Exception as e:
+                text = f"[ERROR: {str(e)}]"
+
+            output.append({
+                "box": box,
+                "text": text.strip()
+            })
+
+    return JSONResponse(content={"result": output})

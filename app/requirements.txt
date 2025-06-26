@@ -2,5 +2,8 @@ fastapi==0.95.1
 uvicorn[standard]==0.22.0
 paddlepaddle==2.6.1
 paddleocr>=2.0.1
-Pillow==10.0.0
+pillow==10.0.0
 python-multipart
+pytesseract
+opencv-python
+numpy
