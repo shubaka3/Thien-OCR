@@ -1,3 +1,5 @@
+### CHECKED-DONE
+
 Chạy Docker build
 test với postman
 http://localhost:8000/ocr-full
